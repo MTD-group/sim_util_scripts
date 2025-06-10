@@ -1,4 +1,4 @@
-# Simulation Utility Scripts (sim_util_scripts)
+# Simulation Utility Scripts
 Handy scripts for miscellaneous tasks relevant to first-principles calculations
 - CIF <=> POSCAR conversion
 - Find primitive cell
