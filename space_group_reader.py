@@ -2,21 +2,23 @@
 """
 Report space-group symbol and number at several symmetry tolerances.
 
-For each input structure, prints a table of (symprec, angle_tolerance) pairs
-and the space group pymatgen assigns at each setting. Comparing rows helps judge
-how sensitive the assigned symmetry is to small distortions or numerical noise.
+By default, prints a table of (symprec, angle_tolerance) pairs and the space group
+pymatgen assigns at each setting. Pass ``--symprec`` and/or ``--angle-tol`` to report
+a single tolerance pair instead.
 
 Usage:
-    space_group_reader.py FILE [FILE ...]
+    space_group_reader.py [--symprec SYMPREC] [--angle-tol DEG] FILE [FILE ...]
 """
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
+import argparse
 
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
+DEFAULT_SYMPREC = 1e-4
+DEFAULT_ANGLE_TOL = 0.1
 
 # (symprec, angle_tolerance) pairs from tight to loose matching.
 # Tighter tolerances reveal symmetry broken by small distortions; looser ones
@@ -33,21 +35,55 @@ TOLERANCE_GRID: list[tuple[float, float]] = [
 ]
 
 
-def parse_args() -> list[str]:
-    if len(sys.argv) < 2:
-        print(f"Usage: {Path(sys.argv[0]).name} FILE [FILE ...]", file=sys.stderr)
-        sys.exit(1)
-    return sys.argv[1:]
+def parse_args() -> tuple[list[str], list[tuple[float, float]]]:
+    parser = argparse.ArgumentParser(
+        description="Report space-group assignment at one or more tolerance settings.",
+    )
+    parser.add_argument(
+        "files",
+        nargs="+",
+        help="structure files to analyze",
+    )
+    parser.add_argument(
+        "--symprec",
+        type=float,
+        help=(
+            f"symmetry tolerance in Angstrom (default: sweep preset grid, "
+            f"or {DEFAULT_SYMPREC:g} with --angle-tol)"
+        ),
+    )
+    parser.add_argument(
+        "--angle-tol",
+        "--angle-tolerance",
+        type=float,
+        dest="angle_tol",
+        help=(
+            f"angle tolerance in degrees (default: sweep preset grid, "
+            f"or {DEFAULT_ANGLE_TOL:g} with --symprec)"
+        ),
+    )
+    args = parser.parse_args()
+
+    if args.symprec is None and args.angle_tol is None:
+        tolerances = TOLERANCE_GRID
+    else:
+        symprec = DEFAULT_SYMPREC if args.symprec is None else args.symprec
+        angle_tol = DEFAULT_ANGLE_TOL if args.angle_tol is None else args.angle_tol
+        tolerances = [(symprec, angle_tol)]
+
+    return args.files, tolerances
 
 
-def report_space_groups(file_path: str) -> None:
-    """Print a tolerance sweep table for one structure file."""
+def report_space_groups(
+    file_path: str, tolerances: list[tuple[float, float]]
+) -> None:
+    """Print a tolerance table for one structure file."""
     structure = Structure.from_file(file_path)
     print(f"\n{file_path}")
     print(f"{'symprec':>10}  {'angle_tol':>10}  {'symbol':<12}  number")
     print("-" * 48)
 
-    for symprec, angle_tol in TOLERANCE_GRID:
+    for symprec, angle_tol in tolerances:
         analyzer = SpacegroupAnalyzer(
             structure, symprec=symprec, angle_tolerance=angle_tol
         )
@@ -57,8 +93,9 @@ def report_space_groups(file_path: str) -> None:
 
 
 def main() -> None:
-    for file_path in parse_args():
-        report_space_groups(file_path)
+    file_paths, tolerances = parse_args()
+    for file_path in file_paths:
+        report_space_groups(file_path, tolerances)
 
 
 if __name__ == "__main__":

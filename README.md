@@ -67,10 +67,11 @@ If the output file already exists, writes `*_conv.vasp` instead.
 
 ### `convert_struc_prim_cif.py`
 
-Find the standardized primitive cell (symprec=`1e-4`, angle tolerance=`0.1`) and write CIF.
+Find the standardized primitive cell and write CIF. Defaults: symprec=`1e-4`, angle tolerance=`0.1`.
 
 ```bash
 convert_struc_prim_cif.py supercell.vasp
+convert_struc_prim_cif.py --symprec 1e-3 --angle-tol 2 supercell.vasp
 # supercell.vasp  ==>  supercell.cif
 ```
 
@@ -82,6 +83,7 @@ Same primitive-cell reduction, written as POSCAR (`.vasp`).
 
 ```bash
 convert_struc_prim_poscar.py structure.cif
+convert_struc_prim_poscar.py --symprec 1e-3 --angle-tol 2 structure.cif
 # structure.cif  ==>  structure.vasp
 ```
 
@@ -95,6 +97,7 @@ tight tolerances and recovers a higher-symmetry group when tolerances are relaxe
 
 ```bash
 space_group_reader.py distorted.cif
+space_group_reader.py --symprec 1e-4 --angle-tol 0.1 distorted.cif
 ```
 
 Example output:
@@ -114,9 +117,10 @@ distorted.cif
 - Input formats: any structure format pymatgen supports (CIF, POSCAR/CONTCAR, XYZ, etc.).
 - Output naming: extensions `.vasp`, `.cif`, `.POSCAR`, and `.poscar` are stripped from the
   input basename before the output suffix is appended.
-- Primitive-cell scripts use VASP-style defaults (`symprec=1e-4`, `angle_tolerance=0.1`).
-  Edit `DEFAULT_SYMPREC` and `DEFAULT_ANGLE_TOL` at the top of `struc_utils.py` to change them
-  for both primitive scripts.
+- Primitive-cell scripts accept ``--symprec`` (Angstrom) and ``--angle-tol`` (degrees).
+  Defaults match VASP-style settings: ``symprec=1e-4``, ``angle_tolerance=0.1``.
+- ``space_group_reader.py`` sweeps a preset tolerance grid by default. Pass
+  ``--symprec`` and/or ``--angle-tol`` to report a single pair instead.
 
 ## License
 

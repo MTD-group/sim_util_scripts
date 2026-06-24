@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -23,6 +24,34 @@ def parse_args() -> list[str]:
         print(f"Usage: {Path(sys.argv[0]).name} FILE [FILE ...]", file=sys.stderr)
         sys.exit(1)
     return sys.argv[1:]
+
+
+def parse_prim_args() -> tuple[list[str], float, float]:
+    """Return input files and symmetry tolerances for primitive-cell scripts."""
+    parser = argparse.ArgumentParser(
+        description="Reduce structures to the primitive cell.",
+    )
+    parser.add_argument(
+        "files",
+        nargs="+",
+        help="structure files to convert",
+    )
+    parser.add_argument(
+        "--symprec",
+        type=float,
+        default=DEFAULT_SYMPREC,
+        help=f"symmetry tolerance in Angstrom (default: {DEFAULT_SYMPREC:g})",
+    )
+    parser.add_argument(
+        "--angle-tol",
+        "--angle-tolerance",
+        type=float,
+        default=DEFAULT_ANGLE_TOL,
+        dest="angle_tol",
+        help=f"angle tolerance in degrees (default: {DEFAULT_ANGLE_TOL:g})",
+    )
+    args = parser.parse_args()
+    return args.files, args.symprec, args.angle_tol
 
 
 def convert_structures(
