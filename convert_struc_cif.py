@@ -1,28 +1,26 @@
+#!/usr/bin/env python3
 """
-@author: Kyle Miller
-Usage: python convert_struc_cif.py struc1 struc2
+Convert structure files to CIF format.
+
+Accepts POSCAR, CIF, or any other format pymatgen can read. Output basename
+matches the input with a ``.cif`` suffix. If that file already exists, writes
+``*_conv.cif`` instead.
+
+Usage:
+    convert_struc_cif.py FILE [FILE ...]
 """
 
-from pymatgen.core.structure import Structure
 import sys
-import os
+from pathlib import Path
 
-def main():
-    file_names = sys.argv[1:]
-    for file_name in file_names:
-        target_suffix = '.cif'
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-        ### Parse structure
-        struc = Structure.from_file(file_name)
+from struc_utils import convert_structures, parse_args
 
-        ### Assign output name, tweak to avoid overwrite
-        out_file_name = file_name.replace('.vasp','').replace('.cif','') + target_suffix
-        if os.path.exists(out_file_name): 
-            out_file_name = out_file_name.replace(target_suffix, f'_conv.{target_suffix}')
-        print(f'{file_name}  ==>  {out_file_name}')
 
-        ### Write structure to file
-        struc.to(fmt='cif', filename=out_file_name)
-            
+def main() -> None:
+    convert_structures(parse_args(), fmt="cif", suffix=".cif", tag="conv")
+
+
 if __name__ == "__main__":
     main()

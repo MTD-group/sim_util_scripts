@@ -1,38 +1,32 @@
+#!/usr/bin/env python3
 """
-@author: Kyle Miller
-Usage: python convert_struc_prim_cif.py struc1 struc2
+Reduce a structure to its primitive cell and write CIF format.
+
+Uses pymatgen's ``SpacegroupAnalyzer`` with symprec=1e-4 and angle_tolerance=0.1
+(VASP defaults). Output basename matches the input with a ``.cif`` suffix. If
+that file already exists, writes ``*_prim.cif`` instead.
+
+Usage:
+    convert_struc_prim_cif.py FILE [FILE ...]
 """
 
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.core.structure import Structure
 import sys
-import os
+from pathlib import Path
 
-def main():
-    SYMPREC = 1e-4
-    ANGLE_TOL = 0.1
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-    file_names = sys.argv[1:]
-    for file_name in file_names:
-        target_suffix = '.cif'
+from struc_utils import convert_structures, parse_args
 
-        ### Parse structure
-        struc = Structure.from_file(file_name)
 
-        ### Get primitive structure
-        sga = SpacegroupAnalyzer(struc, symprec=SYMPREC, angle_tolerance=ANGLE_TOL)
-        struc = sga.get_primitive_standard_structure()
+def main() -> None:
+    convert_structures(
+        parse_args(),
+        fmt="cif",
+        suffix=".cif",
+        tag="prim",
+        primitive=True,
+    )
 
-        ### Assign output name, tweak to avoid overwrite
-        out_file_name = file_name.replace('.vasp','').replace('.cif','') + target_suffix
-        if os.path.exists(out_file_name): 
-            out_file_name = out_file_name.replace(target_suffix, f'_prim.{target_suffix}')
-        print(f'{file_name}  ==>  {out_file_name}')
 
-        ### Write structure to file
-        struc.to(fmt='cif', filename=out_file_name)
-            
 if __name__ == "__main__":
     main()
-
-
